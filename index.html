@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<title>تطبيق هدى</title>
+<title>جمع أسعار الطلب</title>
 <style>
   :root {
     --cream:    #FAF7F4;
@@ -156,22 +156,28 @@
 
   /* ── Total Display ── */
   .total-section {
-    padding: 32px 20px 24px;
-    text-align: center;
+    padding: 16px 16px 14px;
     border-bottom: 1px solid var(--cream-2);
-    position: relative;
+    background: var(--cream);
+  }
+
+  .total-inline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
   }
 
   .total-label {
-    font-size: 17px;
+    font-size: 20px;
     font-weight: 700;
     color: var(--ink-2);
-    letter-spacing: .02em;
-    margin-bottom: 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .total-value {
-    font-size: clamp(56px, 18vw, 96px);
+    font-size: clamp(28px, 9vw, 48px);
     font-weight: 700;
     color: var(--green);
     line-height: 1;
@@ -179,6 +185,7 @@
     transition: all .3s cubic-bezier(.34,1.56,.64,1);
     font-family: 'DM Mono', monospace;
     word-break: break-all;
+    text-align: left;
   }
 
   .total-value.bump {
@@ -190,14 +197,14 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    margin-top: 12px;
-    font-size: 17px;
+    margin-top: 10px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--ink-2);
     background: var(--cream-2);
     border: 1px solid var(--border);
     border-radius: 20px;
-    padding: 7px 18px;
+    padding: 6px 14px;
   }
 
   .count-pill strong {
@@ -520,10 +527,9 @@
 
   <!-- Total -->
   <div class="total-section">
-    <div class="total-label">المجموع</div>
-    <div id="total" class="total-value">0</div>
-    <div class="count-pill">
-      عدد الفقرات: <strong id="count">0</strong>
+    <div class="total-inline">
+      <div class="total-label">المجموع:</div>
+      <div id="total" class="total-value">0</div>
     </div>
   </div>
 
@@ -533,6 +539,11 @@
     <div class="price-row">
       <button class="add-btn" onclick="addPrice()" title="أضف">＋</button>
       <input type="number" id="priceInput" class="price-input" placeholder="0.00" inputmode="decimal" step="0.01" min="0">
+    </div>
+    <div style="margin-top:12px;">
+      <div class="count-pill">
+        عدد الفقرات: <strong id="count">0</strong>
+      </div>
     </div>
   </div>
 
