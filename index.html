@@ -138,6 +138,14 @@
     box-shadow: 0 0 0 3px rgba(204,120,92,.12);
   }
 
+  .customer-field {
+    margin-bottom: 10px;
+  }
+
+  .customer-field:last-child {
+    margin-bottom: 0;
+  }
+
   /* ── Total Display ── */
   .total-section {
     padding: 28px 20px 20px;
@@ -400,6 +408,55 @@
     color: var(--coral-d); font-size: 18px;
     cursor: pointer; line-height: 1; padding: 0 2px;
   }
+
+  /* ── Today's customers dropdown ── */
+  .today-section {
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 12px;
+  }
+
+  .today-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-3);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    padding: 0 2px;
+  }
+
+  .today-select {
+    width: 100%;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+    cursor: pointer;
+    transition: border-color .2s, box-shadow .2s;
+    text-align: right;
+    direction: rtl;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2378716C' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 14px center;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .today-select:focus {
+    border-color: var(--coral);
+    box-shadow: 0 0 0 3px rgba(204,120,92,.12);
+  }
+
+  .today-select:disabled {
+    opacity: .5;
+    cursor: default;
+  }
 </style>
 </head>
 <body>
@@ -420,13 +477,29 @@
   <div class="date-badge" id="dateDisplay">—</div>
 </header>
 
+<!-- Today's Customers Dropdown -->
+<div class="today-section">
+  <div class="today-label">زبائن اليوم</div>
+  <select id="todaySelect" class="today-select" onchange="loadFromDropdown()">
+    <option value="">— اختر زبون —</option>
+  </select>
+</div>
+
 <!-- Main Card -->
 <div class="card">
 
   <!-- Customer -->
   <div class="customer-section">
-    <div class="section-label">اسم الزبون</div>
-    <input type="text" id="customerName" class="customer-input" placeholder="أدخل اسم الزبون…">
+    <div class="section-label">بيانات الزبون</div>
+    <div class="customer-field">
+      <input type="text" id="customerName" class="customer-input" placeholder="اسم الزبون…">
+    </div>
+    <div class="customer-field">
+      <input type="tel" id="customerPhone" class="customer-input" placeholder="رقم الهاتف…" inputmode="tel">
+    </div>
+    <div class="customer-field">
+      <input type="text" id="customerAddress" class="customer-input" placeholder="عنوان الزبون…">
+    </div>
   </div>
 
   <!-- Total -->
@@ -482,21 +555,59 @@
 // ── State ──────────────────────────────────────────────
 let items = [];
 let total = 0;
+let todayKey = new Date().toISOString().slice(0, 10);          // "YYYY-MM-DD"
 let currentDate = new Date().toLocaleDateString('ar-IQ');
+let activeIndex = -1;   // index in today's archive array; -1 = unsaved new customer
 
 const priceInput = document.getElementById('priceInput');
 const totalEl    = document.getElementById('total');
 const countEl    = document.getElementById('count');
 const listEl     = document.getElementById('itemsList');
+const todaySelect = document.getElementById('todaySelect');
+
+// ── Archive helpers ────────────────────────────────────
+function getArchive() {
+  try { return JSON.parse(localStorage.getItem('salesArchive') || '{}'); } catch(e) { return {}; }
+}
+
+function saveArchive(archive) {
+  try { localStorage.setItem('salesArchive', JSON.stringify(archive)); } catch(e) {}
+}
+
+function getTodayList() {
+  return getArchive()[todayKey] || [];
+}
 
 // ── Init ───────────────────────────────────────────────
 document.getElementById('dateDisplay').innerText = currentDate;
-loadLocal();
+initLoad();
 
 // ── Keyboard shortcut: Enter to add ───────────────────
 priceInput.addEventListener('keydown', e => {
   if (e.key === 'Enter') addPrice();
 });
+
+// ── Load on startup ────────────────────────────────────
+function initLoad() {
+  const list = getTodayList();
+  if (list.length > 0) {
+    activeIndex = list.length - 1;
+    applyCustomerData(list[activeIndex]);
+  }
+  refreshDropdown();
+}
+
+function applyCustomerData(data) {
+  items = data.items || [];
+  total = data.total || 0;
+  currentDate = data.date || currentDate;
+  document.getElementById('customerName').value    = data.customerName || '';
+  document.getElementById('customerPhone').value   = data.customerPhone || '';
+  document.getElementById('customerAddress').value = data.customerAddress || '';
+  document.getElementById('dateDisplay').innerText = currentDate;
+  renderChips();
+  renderTotals();
+}
 
 // ── Core functions ─────────────────────────────────────
 function addPrice() {
@@ -523,20 +634,30 @@ function removeItem(index) {
 }
 
 function newCustomer() {
-  if (items.length > 0 && !confirm('هل تريد بدء زبون جديد؟ سيتم مسح البيانات الحالية.')) return;
+  if (items.length > 0 && !confirm('هل تريد بدء زبون جديد؟ سيتم حفظ الزبون الحالي.')) return;
+  // Save current before clearing
+  if (document.getElementById('customerName').value.trim() || items.length > 0) {
+    saveLocal();
+  }
   items = []; total = 0;
-  document.getElementById('customerName').value = '';
+  activeIndex = -1;
+  document.getElementById('customerName').value    = '';
+  document.getElementById('customerPhone').value   = '';
+  document.getElementById('customerAddress').value = '';
   currentDate = new Date().toLocaleDateString('ar-IQ');
   document.getElementById('dateDisplay').innerText = currentDate;
-  updateUI();
+  todaySelect.value = '';
+  renderChips();
+  renderTotals();
   showToast('تم بدء سجل جديد');
 }
 
-function updateUI() {
-  totalEl.innerText = total.toLocaleString('ar-IQ');
-  countEl.innerText = items.length;
+function renderTotals() {
+  totalEl.innerText  = total.toLocaleString('ar-IQ');
+  countEl.innerText  = items.length;
+}
 
-  // Rebuild chips
+function renderChips() {
   listEl.innerHTML = '';
   items.forEach((val, i) => {
     const chip = document.createElement('span');
@@ -547,7 +668,11 @@ function updateUI() {
     `;
     listEl.appendChild(chip);
   });
+}
 
+function updateUI() {
+  renderTotals();
+  renderChips();
   saveLocal();
 }
 
@@ -556,39 +681,72 @@ function bumpTotal() {
   setTimeout(() => totalEl.classList.remove('bump'), 350);
 }
 
-// ── Persistence ────────────────────────────────────────
+// ── Persistence (archive) ──────────────────────────────
 function saveLocal() {
-  const data = {
-    customerName: document.getElementById('customerName').value,
-    items, total,
+  const name = document.getElementById('customerName').value.trim();
+  const customerData = {
+    customerName:    document.getElementById('customerName').value,
+    customerPhone:   document.getElementById('customerPhone').value,
+    customerAddress: document.getElementById('customerAddress').value,
+    items: [...items],
+    total,
     date: currentDate
   };
-  try { localStorage.setItem('salesData', JSON.stringify(data)); } catch(e) {}
+
+  const archive = getArchive();
+  if (!archive[todayKey]) archive[todayKey] = [];
+
+  if (activeIndex >= 0 && activeIndex < archive[todayKey].length) {
+    archive[todayKey][activeIndex] = customerData;
+  } else {
+    archive[todayKey].push(customerData);
+    activeIndex = archive[todayKey].length - 1;
+  }
+
+  saveArchive(archive);
+  refreshDropdown();
 }
 
-function loadLocal() {
-  try {
-    const raw = localStorage.getItem('salesData');
-    if (!raw) return;
-    const data = JSON.parse(raw);
-    items = data.items || [];
-    total = data.total || 0;
-    currentDate = data.date || currentDate;
-    document.getElementById('customerName').value = data.customerName || '';
-    document.getElementById('dateDisplay').innerText = currentDate;
-    updateUI();
-  } catch(e) {}
+// ── Dropdown ───────────────────────────────────────────
+function refreshDropdown() {
+  const list = getTodayList();
+  const prev = todaySelect.value;
+  todaySelect.innerHTML = '<option value="">— اختر زبون —</option>';
+  list.forEach((c, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = c.customerName
+      ? `${c.customerName} — ${c.total.toLocaleString('ar-IQ')}`
+      : `زبون ${i + 1} — ${c.total.toLocaleString('ar-IQ')}`;
+    todaySelect.appendChild(opt);
+  });
+  // Restore selection
+  if (activeIndex >= 0) {
+    todaySelect.value = activeIndex;
+  } else {
+    todaySelect.value = prev || '';
+  }
+}
+
+function loadFromDropdown() {
+  const idx = parseInt(todaySelect.value);
+  if (isNaN(idx)) return;
+  const list = getTodayList();
+  if (!list[idx]) return;
+  activeIndex = idx;
+  applyCustomerData(list[idx]);
+  showToast('تم تحميل بيانات الزبون ✓');
 }
 
 // ── Export / Import ────────────────────────────────────
 function exportJSON() {
-  const raw = localStorage.getItem('salesData');
-  if (!raw) { showToast('لا توجد بيانات للتصدير'); return; }
-  const blob = new Blob([raw], { type: 'application/json' });
+  const archive = getArchive();
+  if (!Object.keys(archive).length) { showToast('لا توجد بيانات للتصدير'); return; }
+  const blob = new Blob([JSON.stringify(archive, null, 2)], { type: 'application/json' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  const name = document.getElementById('customerName').value || 'زبون';
-  link.download = `${name}_${currentDate.replace(/\//g,'-')}.json`;
+  const name = document.getElementById('customerName').value || 'أرشيف';
+  link.download = `${name}_${todayKey}.json`;
   link.click();
   showToast('تم تصدير الملف ✓');
 }
@@ -603,8 +761,21 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
   const reader = new FileReader();
   reader.onload = ev => {
     try {
-      localStorage.setItem('salesData', ev.target.result);
-      loadLocal();
+      const parsed = JSON.parse(ev.target.result);
+      // Support both archive format and old single-record format
+      let archive = getArchive();
+      if (parsed[todayKey] || Object.keys(parsed).some(k => /^\d{4}-\d{2}-\d{2}$/.test(k))) {
+        // It's an archive format — merge
+        Object.keys(parsed).forEach(k => {
+          archive[k] = parsed[k];
+        });
+      } else if (parsed.items !== undefined) {
+        // Old single-record format
+        if (!archive[todayKey]) archive[todayKey] = [];
+        archive[todayKey].push(parsed);
+      }
+      saveArchive(archive);
+      initLoad();
       showToast('تم رفع البيانات بنجاح ✓');
     } catch(err) { showToast('خطأ في قراءة الملف'); }
   };
@@ -614,10 +785,14 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
 
 function clearAll() {
   if (!confirm('هل أنت متأكد من مسح جميع البيانات؟')) return;
-  items = []; total = 0;
-  document.getElementById('customerName').value = '';
-  try { localStorage.removeItem('salesData'); } catch(e) {}
-  updateUI();
+  items = []; total = 0; activeIndex = -1;
+  document.getElementById('customerName').value    = '';
+  document.getElementById('customerPhone').value   = '';
+  document.getElementById('customerAddress').value = '';
+  try { localStorage.removeItem('salesArchive'); } catch(e) {}
+  renderChips();
+  renderTotals();
+  refreshDropdown();
   showToast('تم مسح البيانات');
 }
 
@@ -678,8 +853,10 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// ── Auto-save customer name on change ────────────────
+// ── Auto-save on change ────────────────────────────────
 document.getElementById('customerName').addEventListener('input', saveLocal);
+document.getElementById('customerPhone').addEventListener('input', saveLocal);
+document.getElementById('customerAddress').addEventListener('input', saveLocal);
 </script>
 </body>
 </html>
