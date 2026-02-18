@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#CC785C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="أسعار">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192x192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>جمع أسعار الطلب</title>
+<style>
+  :root {
+    --cream:    #FAF7F4;
+    --cream-2:  #F2EDE8;
+    --ink:      #1C1917;
+    --ink-2:    #44403C;
+    --ink-3:    #78716C;
+    --coral:    #CC785C;
+    --coral-d:  #B5633F;
+    --coral-l:  #F0C4B0;
+    --border:   #E5DDD6;
+    --green:    #3D7A5C;
+    --green-l:  #C9E8D9;
+    --shadow:   0 1px 3px rgba(28,25,23,.08), 0 4px 16px rgba(28,25,23,.06);
+    --shadow-sm:0 1px 2px rgba(28,25,23,.06);
+    --radius:   16px;
+    --radius-sm:10px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 40px;
+  }
+
+  /* ── Header ── */
+  header {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 0 2px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-mark {
+    width: 36px; height: 36px;
+    background: var(--coral);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: white; line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+  }
+
+  .date-badge {
+    font-size: 12px;
+    color: var(--ink-3);
+    background: var(--cream-2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── Card ── */
+  .card {
+    width: 100%;
+    max-width: 400px;
+    background: white;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  /* ── Customer Section ── */
+  .customer-section {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--cream-2);
+    background: var(--cream);
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-3);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .customer-input {
+    width: 100%;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color .2s;
+    text-align: right;
+    direction: rtl;
+  }
+
+  .customer-input::placeholder { color: var(--ink-3); }
+
+  .customer-input:focus {
+    border-color: var(--coral);
+    box-shadow: 0 0 0 3px rgba(204,120,92,.12);
+  }
+
+  /* ── Total Display ── */
+  .total-section {
+    padding: 28px 20px 20px;
+    text-align: center;
+    border-bottom: 1px solid var(--cream-2);
+    position: relative;
+  }
+
+  .total-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-3);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .total-value {
+    font-size: 72px;
+    font-weight: 300;
+    color: var(--green);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    transition: all .3s cubic-bezier(.34,1.56,.64,1);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .total-value.bump {
+    transform: scale(1.06);
+    color: var(--coral);
+  }
+
+  .count-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--ink-3);
+    background: var(--cream-2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+  }
+
+  .count-pill strong {
+    font-weight: 600;
+    color: var(--ink-2);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── Price Input Section ── */
+  .input-section {
+    padding: 20px;
+    border-bottom: 1px solid var(--cream-2);
+  }
+
+  .price-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .price-input {
+    flex: 1;
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 13px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 20px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    text-align: center;
+    direction: ltr;
+  }
+
+  .price-input::placeholder {
+    color: var(--ink-3);
+    font-size: 14px;
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+  }
+
+  .price-input:focus {
+    border-color: var(--coral);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(204,120,92,.12);
+  }
+
+  /* Remove number input arrows */
+  .price-input::-webkit-outer-spin-button,
+  .price-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .price-input[type=number] { -moz-appearance: textfield; }
+
+  .add-btn {
+    width: 50px; height: 50px;
+    background: var(--coral);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: white;
+    font-size: 26px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .18s, transform .12s;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .add-btn:hover { background: var(--coral-d); }
+  .add-btn:active { transform: scale(.93); }
+
+  /* ── Items list ── */
+  .items-section {
+    padding: 12px 20px 8px;
+    max-height: 180px;
+    overflow-y: auto;
+    border-bottom: 1px solid var(--cream-2);
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .items-section:empty { display: none; }
+
+  .item-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--cream-2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 10px 4px 6px;
+    font-size: 13px;
+    color: var(--ink-2);
+    margin: 3px 3px;
+    font-family: 'DM Mono', monospace;
+    animation: chip-in .25s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  @keyframes chip-in {
+    from { opacity:0; transform: scale(.7); }
+    to   { opacity:1; transform: scale(1); }
+  }
+
+  .chip-remove {
+    width: 16px; height: 16px;
+    background: var(--border);
+    border: none; border-radius: 50%;
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--ink-3);
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+    flex-shrink: 0;
+  }
+  .chip-remove:hover { background: var(--coral-l); color: var(--coral-d); }
+
+  /* ── Actions ── */
+  .actions {
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .btn {
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 11px 10px;
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .18s, transform .12s, box-shadow .18s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    letter-spacing: -0.01em;
+  }
+
+  .btn:active { transform: scale(.96); }
+
+  .btn-primary {
+    background: var(--coral);
+    color: white;
+  }
+  .btn-primary:hover { background: var(--coral-d); }
+
+  .btn-secondary {
+    background: var(--cream-2);
+    color: var(--ink-2);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--border); }
+
+  .btn-danger {
+    background: white;
+    color: #C0392B;
+    border: 1px solid #F5C6C2;
+  }
+  .btn-danger:hover { background: #FEF0EE; }
+
+  .btn-full { grid-column: 1 / -1; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--ink);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    pointer-events: none;
+    transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .35s;
+    opacity: 0;
+    white-space: nowrap;
+    z-index: 100;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  /* ── PWA install banner ── */
+  #install-banner {
+    display: none;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 14px;
+    background: var(--coral-l);
+    border: 1px solid var(--coral);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--coral-d);
+    font-weight: 500;
+  }
+
+  #install-banner.visible { display: flex; }
+
+  #install-btn {
+    margin-right: auto;
+    background: var(--coral);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+  }
+
+  #dismiss-banner {
+    background: none; border: none;
+    color: var(--coral-d); font-size: 18px;
+    cursor: pointer; line-height: 1; padding: 0 2px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Install Banner -->
+<div id="install-banner">
+  <span>📲 تثبيت التطبيق على جهازك</span>
+  <button id="install-btn">تثبيت</button>
+  <button id="dismiss-banner">✕</button>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <div class="logo-mark">＋</div>
+    <span class="logo-text">جمع الأسعار</span>
+  </div>
+  <div class="date-badge" id="dateDisplay">—</div>
+</header>
+
+<!-- Main Card -->
+<div class="card">
+
+  <!-- Customer -->
+  <div class="customer-section">
+    <div class="section-label">اسم الزبون</div>
+    <input type="text" id="customerName" class="customer-input" placeholder="أدخل اسم الزبون…">
+  </div>
+
+  <!-- Total -->
+  <div class="total-section">
+    <div class="total-label">المجموع</div>
+    <div id="total" class="total-value">0</div>
+    <div class="count-pill">
+      عدد الفقرات: <strong id="count">0</strong>
+    </div>
+  </div>
+
+  <!-- Price Entry -->
+  <div class="input-section">
+    <div class="section-label" style="margin-bottom:10px;">إضافة سعر</div>
+    <div class="price-row">
+      <button class="add-btn" onclick="addPrice()" title="أضف">＋</button>
+      <input type="number" id="priceInput" class="price-input" placeholder="0.00" inputmode="decimal" step="0.01" min="0">
+    </div>
+  </div>
+
+  <!-- Items chips -->
+  <div class="items-section" id="itemsList"></div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="btn btn-secondary" onclick="newCustomer()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+      زبون جديد
+    </button>
+    <button class="btn btn-secondary" onclick="exportJSON()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      تصدير
+    </button>
+    <button class="btn btn-secondary" onclick="importJSON()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      رفع ملف
+    </button>
+    <button class="btn btn-danger" onclick="clearAll()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      مسح الكل
+    </button>
+  </div>
+
+</div>
+
+<!-- Hidden file input -->
+<input type="file" id="fileInput" style="display:none" accept=".json">
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────
+let items = [];
+let total = 0;
+let currentDate = new Date().toLocaleDateString('ar-IQ');
+
+const priceInput = document.getElementById('priceInput');
+const totalEl    = document.getElementById('total');
+const countEl    = document.getElementById('count');
+const listEl     = document.getElementById('itemsList');
+
+// ── Init ───────────────────────────────────────────────
+document.getElementById('dateDisplay').innerText = currentDate;
+loadLocal();
+
+// ── Keyboard shortcut: Enter to add ───────────────────
+priceInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') addPrice();
+});
+
+// ── Core functions ─────────────────────────────────────
+function addPrice() {
+  const value = parseFloat(priceInput.value);
+  if (isNaN(value) || value <= 0) {
+    priceInput.classList.add('shake');
+    setTimeout(() => priceInput.classList.remove('shake'), 400);
+    return;
+  }
+  items.push(value);
+  total = Math.round((total + value) * 100) / 100;
+  priceInput.value = '';
+  priceInput.focus();
+  updateUI();
+  bumpTotal();
+}
+
+function removeItem(index) {
+  const val = items[index];
+  items.splice(index, 1);
+  total = Math.round((total - val) * 100) / 100;
+  if (total < 0) total = 0;
+  updateUI();
+}
+
+function newCustomer() {
+  if (items.length > 0 && !confirm('هل تريد بدء زبون جديد؟ سيتم مسح البيانات الحالية.')) return;
+  items = []; total = 0;
+  document.getElementById('customerName').value = '';
+  currentDate = new Date().toLocaleDateString('ar-IQ');
+  document.getElementById('dateDisplay').innerText = currentDate;
+  updateUI();
+  showToast('تم بدء سجل جديد');
+}
+
+function updateUI() {
+  totalEl.innerText = total.toLocaleString('ar-IQ');
+  countEl.innerText = items.length;
+
+  // Rebuild chips
+  listEl.innerHTML = '';
+  items.forEach((val, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'item-chip';
+    chip.innerHTML = `
+      <button class="chip-remove" onclick="removeItem(${i})" title="حذف">✕</button>
+      ${val.toLocaleString('ar-IQ')}
+    `;
+    listEl.appendChild(chip);
+  });
+
+  saveLocal();
+}
+
+function bumpTotal() {
+  totalEl.classList.add('bump');
+  setTimeout(() => totalEl.classList.remove('bump'), 350);
+}
+
+// ── Persistence ────────────────────────────────────────
+function saveLocal() {
+  const data = {
+    customerName: document.getElementById('customerName').value,
+    items, total,
+    date: currentDate
+  };
+  try { localStorage.setItem('salesData', JSON.stringify(data)); } catch(e) {}
+}
+
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem('salesData');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    items = data.items || [];
+    total = data.total || 0;
+    currentDate = data.date || currentDate;
+    document.getElementById('customerName').value = data.customerName || '';
+    document.getElementById('dateDisplay').innerText = currentDate;
+    updateUI();
+  } catch(e) {}
+}
+
+// ── Export / Import ────────────────────────────────────
+function exportJSON() {
+  const raw = localStorage.getItem('salesData');
+  if (!raw) { showToast('لا توجد بيانات للتصدير'); return; }
+  const blob = new Blob([raw], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  const name = document.getElementById('customerName').value || 'زبون';
+  link.download = `${name}_${currentDate.replace(/\//g,'-')}.json`;
+  link.click();
+  showToast('تم تصدير الملف ✓');
+}
+
+function importJSON() {
+  document.getElementById('fileInput').click();
+}
+
+document.getElementById('fileInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      localStorage.setItem('salesData', ev.target.result);
+      loadLocal();
+      showToast('تم رفع البيانات بنجاح ✓');
+    } catch(err) { showToast('خطأ في قراءة الملف'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+function clearAll() {
+  if (!confirm('هل أنت متأكد من مسح جميع البيانات؟')) return;
+  items = []; total = 0;
+  document.getElementById('customerName').value = '';
+  try { localStorage.removeItem('salesData'); } catch(e) {}
+  updateUI();
+  showToast('تم مسح البيانات');
+}
+
+// ── Toast ──────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── PWA: Service Worker ────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+// ── PWA: Install prompt ────────────────────────────────
+let deferredPrompt;
+const banner = document.getElementById('install-banner');
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  banner.classList.add('visible');
+});
+
+document.getElementById('install-btn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') showToast('تم تثبيت التطبيق ✓');
+  deferredPrompt = null;
+  banner.classList.remove('visible');
+});
+
+document.getElementById('dismiss-banner').addEventListener('click', () => {
+  banner.classList.remove('visible');
+});
+
+window.addEventListener('appinstalled', () => {
+  banner.classList.remove('visible');
+  showToast('تم تثبيت التطبيق ✓');
+});
+
+// ── Shake animation ────────────────────────────────────
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes shake {
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-6px)}
+    40%{transform:translateX(6px)}
+    60%{transform:translateX(-4px)}
+    80%{transform:translateX(4px)}
+  }
+  .shake { animation: shake .35s ease; border-color: #C0392B !important; }
+`;
+document.head.appendChild(style);
+
+// ── Auto-save customer name on change ────────────────
+document.getElementById('customerName').addEventListener('input', saveLocal);
+</script>
+</body>
+</html>
